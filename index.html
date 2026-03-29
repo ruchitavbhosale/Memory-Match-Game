@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MindFlip — Multi-Level Memory Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #0f1020;
+      --bg2: #1b1d3a;
+      --accent: #6c7cff;
+      --accent2: #00ffd1;
+      --card: #14162e;
+      --good: #2ecc71;
+      --bad: #ff5b5b;
+      --glass: rgba(255,255,255,.05);
+    }
+
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+    body {
+      margin: 0; min-height: 100vh; color: #fff;
+      background: radial-gradient(1200px 600px at 10% 10%, #2a2f6f 0%, transparent 60%),
+                  radial-gradient(1000px 600px at 90% 20%, #0c5a5a 0%, transparent 60%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      display: flex; align-items: center; justify-content: center;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius: 24px; padding: 20px; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+
+    .app:hover { transform: scale(1.02); }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 20px; border-radius: 16px; background: var(--glass);
+      backdrop-filter: blur(6px);
+      flex-wrap: wrap;
+    }
+
+    .title {
+      display: flex; align-items: center; gap: 14px; font-weight: 700; letter-spacing: .5px;
+    }
+
+    .logo {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: conic-gradient(from 0deg, var(--accent), var(--accent2), #ff8bd4, var(--accent));
+      box-shadow: 0 0 25px rgba(108,124,255,.7);
+    }
+
+    .title div { display: flex; flex-direction: column; }
+    .title div small { opacity: 0.6; font-weight: 400; font-size: 0.85rem; }
+
+    .stats {
+      display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+    }
+    .pill {
+      background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 500;
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pill strong { color: var(--accent2); }
+
+    .board-wrap { margin-top: 20px; padding: 16px; border-radius: 16px; background: var(--glass); }
+
+    .board {
+      display: grid; gap: 16px; justify-content: center;
+      transition: all .3s ease;
+    }
+
+    .card {
+      width: 90px; height: 120px; perspective: 1000px; cursor: pointer; position: relative;
+      transition: transform 0.3s ease;
+    }
+    .card:hover { transform: scale(1.08); }
+
+    .card-inner {
+      width: 100%; height: 100%; position: absolute; transform-style: preserve-3d;
+      transition: transform .6s cubic-bezier(.2,.8,.2,1);
+      box-shadow: 0 10px 25px rgba(0,0,0,.4);
+      border-radius: 14px;
+    }
+    .card.flipped .card-inner { transform: rotateY(180deg); }
+    .card.matched .card-inner { transform: rotateY(180deg); box-shadow: 0 0 20px var(--good); }
+
+    .face {
+      position: absolute; inset: 0; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      backface-visibility: hidden; font-size: 42px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,.15);
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+
+    .front {
+      background: linear-gradient(180deg, #0f122b, #0b0d22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; color: rgba(255,255,255,0.7);
+    }
+
+    .back {
+      transform: rotateY(180deg);
+      background: linear-gradient(180deg, #1b1f60, #12164a);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.05);
+      font-size: 36px;
+    }
+
+    .matched .back { background: linear-gradient(180deg, var(--good), #0b3d1a); }
+
+    .controls { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+    .btn {
+      background: linear-gradient(180deg, var(--accent), #5666ff);
+      border: none; color: white; padding: 12px 18px; border-radius: 14px;
+      font-weight: 600; cursor: pointer; box-shadow: 0 10px 28px rgba(108,124,255,.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(108,124,255,.5); }
+    .btn.secondary { background: linear-gradient(180deg, #2a2f6f, #1a1f57); }
+
+    footer { text-align: center; opacity: 0.7; font-size: 13px; margin-top: 16px; }
+
+    /* Modal */
+    .modal {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(6px); z-index: 10;
+      padding: 20px;
+    }
+    .modal.show { display: flex; }
+    .modal-card {
+      width: min(420px, 100%); background: #0f122b; border-radius: 20px; padding: 28px 24px; text-align: center;
+      box-shadow: 0 25px 80px rgba(0,0,0,.6);
+      animation: pop .4s ease;
+    }
+    @keyframes pop { from{ transform: scale(.8); opacity:0 } to{ transform: scale(1); opacity:1 } }
+    .modal-card h2 { margin: 0 0 10px; font-size: 1.5rem; }
+    .input {
+      width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,.2);
+      background: #0b0d22; color: #fff; outline: none; margin-top: 12px; font-size: 1rem;
+      transition: border 0.2s ease;
+    }
+    .input:focus { border: 1px solid var(--accent2); }
+
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #0b0d22; border: 1px solid rgba(255,255,255,.15); border-radius: 14px;
+      padding: 12px 18px; display: none; z-index: 20; font-weight: 500;
+    }
+    .toast.show { display: block; animation: slideUp .4s ease; }
+    @keyframes slideUp { from{ transform:translate(-50%,20px); opacity:0 } to{ transform:translate(-50%,0); opacity:1 } }
+
+    .shake { animation: shake .4s; }
+    @keyframes shake { 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-5px) } 75%{ transform:translateX(5px) } }
+
+    @media (max-width: 600px) {
+      .card { width: 70px; height: 92px; }
+      .face { font-size: 28px; }
+      .stats { justify-content: center; margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <div class="logo"></div>
+        <div>
+          <div>MindFlip</div>
+          <small>Multi-Level Memory Challenge</small>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="pill">Player: <strong id="playerName">—</strong></div>
+        <div class="pill">Level: <strong id="level">1</strong></div>
+        <div class="pill">Moves Left: <strong id="moves">3</strong></div>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn secondary" id="restartBtn">Restart</button>
+    </div>
+
+    <footer>Tip: All cards are shown for a few seconds at the start of each level. You have only <b>3 chances</b> to finish the level!</footer>
+  </div>
+
+  <!-- Start Modal -->
+  <div class="modal show" id="startModal">
+    <div class="modal-card">
+      <h2>Welcome 👋</h2>
+      <p>Enter your name to start the challenge</p>
+      <input class="input" id="nameInput" placeholder="Your name" />
+      <div style="margin-top:16px">
+        <button class="btn" id="startBtn">Start Game</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="modal" id="resultModal">
+    <div class="modal-card" id="resultCard">
+      <h2 id="resultTitle">Congratulations 🎉</h2>
+      <p id="resultText"></p>
+      <div style="margin-top:16px; display:flex; gap:12px; justify-content:center;">
+        <button class="btn" id="nextBtn">Next Level</button>
+        <button class="btn secondary" id="againBtn">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const board = document.getElementById('board');
+    const movesEl = document.getElementById('moves');
+    const levelEl = document.getElementById('level');
+    const playerNameEl = document.getElementById('playerName');
+
+    const startModal = document.getElementById('startModal');
+    const resultModal = document.getElementById('resultModal');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultText = document.getElementById('resultText');
+    const nextBtn = document.getElementById('nextBtn');
+    const againBtn = document.getElementById('againBtn');
+
+    const toast = document.getElementById('toast');
+
+    const emojis = ['🍎','🍌','🍇','🍉','🍒','🍍','🥝','🥑','🍑','🍓','🍋','🍊','🍈','🍏','🥥','🍪','🍩','🍰','🧁','🍫','🍿','🥨','🧀','🍕','🍔','🌮','🌭','🍜','🍣','🍪','🥐','🥞','🧇','🍖','🍗','🥩','🥗','🍙','🍚','🍤','🍛','🍝','🍟','🍺','🍹','🧋','🍵','☕','🫖','🥤','🧊'];
+
+    let level = 1;
+    let movesLeft = 3;
+    let first = null;
+    let second = null;
+    let lock = false;
+    let matchedCount = 0;
+    let totalPairs = 0;
+    let playerName = '';
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(()=> toast.classList.remove('show'), 1800);
+    }
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function levelConfig(lv){
+      const pairs = Math.min(4 + lv, 12);
+      const previewTime = Math.max(1200, 3000 - lv*300);
+      return { pairs, previewTime };
+    }
+
+    function buildBoard(){
+      board.innerHTML = '';
+      first = second = null; lock = false; matchedCount = 0;
+      movesLeft = 3;
+      movesEl.textContent = movesLeft;
+      levelEl.textContent = level;
+
+      const { pairs, previewTime } = levelConfig(level);
+      totalPairs = pairs;
+
+      const pick = shuffle([...emojis]).slice(0, pairs);
+      const cardsData = shuffle([...pick, ...pick]);
+
+      const cols = Math.ceil(Math.sqrt(cardsData.length));
+      board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      cardsData.forEach(symbol => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="face front">?</div>
+            <div class="face back">${symbol}</div>
+          </div>
+        `;
+        card.addEventListener('click', ()=> onCardClick(card));
+        board.appendChild(card);
+      });
+
+      // Preview all cards at start
+      const allCards = document.querySelectorAll('.card');
+      setTimeout(()=> {
+        allCards.forEach(c=> c.classList.add('flipped'));
+        setTimeout(()=> {
+          allCards.forEach(c=> c.classList.remove('flipped'));
+        }, previewTime);
+      }, 300);
+    }
+
+    function onCardClick(card){
+      if(lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+
+      setTimeout(() => {
+        if(!card.classList.contains('matched') && card !== first && card !== second){
+          card.classList.remove('flipped');
+        }
+      }, 1200);
+
+      if(!first){
+        first = card; 
+        return;
+      }
+
+      second = card;
+      lock = true;
+
+      const a = first.querySelector('.back').textContent;
+      const b = second.querySelector('.back').textContent;
+
+      if(a === b){
+        first.classList.add('matched');
+        second.classList.add('matched');
+        matchedCount++;
+        resetPick();
+
+        if(matchedCount === totalPairs){
+          setTimeout(()=> winLevel(), 600);
+        }
+
+      } else {
+        movesLeft--;
+        movesEl.textContent = movesLeft;
+
+        board.classList.add('shake');
+        setTimeout(()=> board.classList.remove('shake'), 400);
+
+        setTimeout(()=>{
+          first.classList.remove('flipped');
+          second.classList.remove('flipped');
+          resetPick();
+
+          if(movesLeft <= 0){
+            loseLevel();
+          }
+        }, 900);
+      }
+    }
+
+    function resetPick(){
+      [first, second] = [null, null];
+      lock = false;
+    }
+
+    function winLevel(){
+      resultTitle.textContent = 'Congratulations 🎉';
+      resultText.textContent = `${playerName}, you completed Level ${level}! Ready for the next challenge?`;
+      nextBtn.style.display = 'inline-block';
+      againBtn.textContent = 'Restart Game';
+      resultModal.classList.add('show');
+    }
+
+    function loseLevel(){
+      resultTitle.textContent = 'You Lost 😢';
+      resultText.textContent = `${playerName}, you used all 3 chances. Try again!`;
+      nextBtn.style.display = 'none';
+      againBtn.textContent = 'Try Again';
+      resultModal.classList.add('show');
+    }
+
+    document.getElementById('startBtn').onclick = () => {
+      const name = document.getElementById('nameInput').value.trim();
+      if(!name){ showToast('Please enter your name'); return; }
+      playerName = name;
+      playerNameEl.textContent = playerName;
+      startModal.classList.remove('show');
+      level = 1;
+      buildBoard();
+    };
+
+    nextBtn.onclick = () => {
+      resultModal.classList.remove('show');
+      level++;
+      buildBoard();
+    };
+
+    againBtn.onclick = () => {
+      resultModal.classList.remove('show');
+      level = 1;
+      buildBoard();
+    };
+
+    document.getElementById('restartBtn').onclick = () => {
+      level = 1;
+      buildBoard();
+    };
+  </script>
+</body>
+</html>
