@@ -12,7 +12,6 @@ const icons = ["🍎","🍌","🍇","🍓","🍒","🥝","🍍","🥥","🍉","�
 function startGame() {
   const nameInput = document.getElementById("playerName").value.trim();
   if (nameInput === "") return alert("Enter your name!");
-
   playerName = nameInput;
   document.getElementById("startScreen").classList.remove("active");
   document.getElementById("gameScreen").classList.add("active");
