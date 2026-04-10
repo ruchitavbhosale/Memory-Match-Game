@@ -15,7 +15,6 @@ function startGame() {
   playerName = nameInput;
   document.getElementById("startScreen").classList.remove("active");
   document.getElementById("gameScreen").classList.add("active");
-
   document.getElementById("playerDisplay").innerText = "Player: " + playerName;
   startLevel();
 }
