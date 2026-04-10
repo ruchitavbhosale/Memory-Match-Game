@@ -105,6 +105,7 @@ function checkMatch() {
       if (chances === 0) {
         showPopup(false);
       }
+      
     }, 1000);
   }
 }
