@@ -23,7 +23,6 @@ function startLevel() {
   document.getElementById("levelDisplay").innerText = level;
   chances = 3;
   document.getElementById("chanceDisplay").innerText = chances;
-
   firstCard = null;
   secondCard = null;
   matches = 0;
