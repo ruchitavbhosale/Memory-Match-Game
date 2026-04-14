@@ -107,8 +107,7 @@ function checkMatch() {
       }
       
     }, 1000);
-  }
-}
+  } }
 
 function resetTurn() {
   [firstCard, secondCard] = [null, null];
